@@ -1,7 +1,94 @@
 define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog, $, mc){
+    var callback = function(feedback_container, status, statusText) {
+        var feedback = '';
+        var container = $('#notebook-container');
+        if (status == 500) {
+            // display feedback to user
+            feedback = '<div class="'+feedback_container+' alert alert-danger alert-dismissible" role="alert"> \
+                              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
+                              <strong>Warning!</strong> Something went wrong. \
+                              <div>'+statusText+'</div> \
+                            </div>';
 
+        } else {
+
+            // display feedback to user
+            feedback = '<div class="'+feedback_container+' alert alert-success alert-dismissible" role="alert"> \
+                              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
+                              '+statusText+' \
+                               \
+                            </div>';
+        }
+
+        // display feedback
+        $('.' + feedback_container).remove();
+        container.prepend(feedback);
+    }
     // we will define an action here that should happen when we ask to clear and restart the kernel.
-    var git_commit_push  = {
+    var git_add  = {
+        help: 'Add current notebook',
+        icon : 'fa-github',
+        help_index : '',
+        handler : function (env) {
+            var on_success = undefined;
+            var on_error = undefined;
+
+            var div = $('<div/>')
+
+            var checkbox = '<input type="checkbox" id="add_only_source" name="feature" value="scales" checked /><label>Add only source code</label>'
+
+            div.append(checkbox)
+
+            // get the canvas for user feedback
+            var container = $('#notebook-container');
+
+            function on_ok(){
+                var re = /^\/notebooks(.*?)$/;
+                var filepath = window.location.pathname.match(re)[1];
+                var payload = {
+                             'filename': filepath,
+                             'add_only_source': $("#add_only_source").prop('checked')
+                           };
+                var settings = {
+                    url : '/git/add',
+                    processData : false,
+                    type : "PUT",
+                    dataType: "json",
+                    data: JSON.stringify(payload),
+                    contentType: 'application/json',
+                    success: function(data) {
+                        callback('add-feedback', data.status, data.statusText)
+                    },
+                    error: function(data) {
+                        callback('add-feedback', 500, data.statusText)
+                    }
+                };
+
+                // display preloader during add
+                var preloader = '<img class="add-feedback" src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.5.8/ajax-loader.gif">';
+                container.prepend(preloader);
+
+                // add
+                $.ajax(settings);
+            }
+
+
+            dialog.modal({
+                body: div ,
+                title: 'Add',
+                buttons: {'Add':
+                            { class:'btn-primary btn-large',
+                              click:on_ok
+                            },
+                          'Cancel':{}
+                    },
+                notebook:env.notebook,
+                keyboard_manager: env.notebook.keyboard_manager,
+            })
+
+        }
+    };
+    var git_commit  = {
         help: 'Commit current notebook and push to GitHub',
         icon : 'fa-github',
         help_index : '',
@@ -13,9 +100,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var input = $('<textarea rows="4" cols="72"></textarea>')
             var div = $('<div/>')
 
-            var checkbox = '<input type="checkbox" id="commit_only_source" name="feature" value="scales" checked /><label>commit only source code</label>'
-    
-            div.append(checkbox)
+
             div.append(p)
                .append(input)
 
@@ -27,8 +112,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                 var filepath = window.location.pathname.match(re)[1];
                 var payload = {
                              'filename': filepath,
-                             'msg': input.val(),
-                             'commit_only_source': $("#commit_only_source").prop('checked')
+                             'msg': input.val()
                            };
                 var settings = {
                     url : '/git/commit',
@@ -38,31 +122,10 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                     data: JSON.stringify(payload),
                     contentType: 'application/json',
                     success: function(data) {
-
-                        // display feedback to user
-                        var container = $('#notebook-container');
-                        var feedback = '<div class="commit-feedback alert alert-success alert-dismissible" role="alert"> \
-                                          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
-                                          '+data.statusText+' \
-                                           \
-                                        </div>';
-
-                        // display feedback
-                        $('.commit-feedback').remove();
-                        container.prepend(feedback);
+                        callback('commit-feedback', data.status, data.statusText)
                     },
                     error: function(data) {
-
-                        // display feedback to user
-                        var feedback = '<div class="commit-feedback alert alert-danger alert-dismissible" role="alert"> \
-                                          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
-                                          <strong>Warning!</strong> Something went wrong. \
-                                          <div>'+data.statusText+'</div> \
-                                        </div>';
-
-                        // display feedback
-                        $('.commit-feedback').remove();
-                        container.prepend(feedback);
+                        callback('commit-feedback', 500, data.statusText)
                     }
                 };
 
@@ -77,8 +140,132 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
 
             dialog.modal({
                 body: div ,
-                title: 'Commit and Push Notebook',
-                buttons: {'Commit and Push':
+                title: 'Commit',
+                buttons: {'Commit':
+                            { class:'btn-primary btn-large',
+                              click:on_ok
+                            },
+                          'Cancel':{}
+                    },
+                notebook:env.notebook,
+                keyboard_manager: env.notebook.keyboard_manager,
+            })
+
+        }
+    };
+    var git_push  = {
+        help: 'Push current notebook to GitHub',
+        icon : 'fa-github',
+        help_index : '',
+        handler : function (env) {
+            var on_success = undefined;
+            var on_error = undefined;
+
+            var p = $('<p/>').text("Are you sure to push this notebook?")
+            var div = $('<div/>')
+            var checkbox = '<input type="checkbox" id="force_push"/><label>Force Push</label>'
+
+            div.append(p);
+            div.append(checkbox);
+
+            // get the canvas for user feedback
+            var container = $('#notebook-container');
+
+            function on_ok(){
+                var re = /^\/notebooks(.*?)$/;
+                var payload = {
+                             'force': $("#force_push").prop('checked')
+                           };
+                var settings = {
+                    url : '/git/push',
+                    processData : false,
+                    type : "PUT",
+                    dataType: "json",
+                    data: JSON.stringify(payload),
+                    contentType: 'application/json',
+                    success: function(data) {
+                        callback('push-feedback', data.status, data.statusText)
+                    },
+                    error: function(data) {
+                        callback('push-feedback', 500, data.statusText)
+                    }
+                };
+
+                // display preloader during commit and push
+                var preloader = '<img class="push-feedback" src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.5.8/ajax-loader.gif">';
+                container.prepend(preloader);
+
+                // commit and push
+                $.ajax(settings);
+            }
+
+
+            dialog.modal({
+                body: div ,
+                title: 'Push Notebook',
+                buttons: {'Push':
+                            { class:'btn-primary btn-large',
+                              click:on_ok
+                            },
+                          'Cancel':{}
+                    },
+                notebook:env.notebook,
+                keyboard_manager: env.notebook.keyboard_manager,
+            })
+
+        }
+    };
+    var git_pull  = {
+        help: 'Pull current notebook from GitHub',
+        icon : 'fa-github',
+        help_index : '',
+        handler : function (env) {
+            var on_success = undefined;
+            var on_error = undefined;
+
+            var p = $('<p/>').text("Are you sure to pull this notbook from github?")
+            // var checkbox = '<input type="checkbox" id="force_pull"/><label>Force Pull</label>'
+            var div = $('<div/>')
+
+            div.append(p)
+            // div.append(checkbox)
+
+            // get the canvas for user feedback
+            var container = $('#notebook-container');
+
+            function on_ok(){
+                var re = /^\/notebooks(.*?)$/;
+                var payload = {
+                             // 'force': $("#force_pull").prop('checked')
+                           };
+                var settings = {
+                    url : '/git/pull',
+                    processData : false,
+                    type : "POST",
+                    dataType: "json",
+                    data: JSON.stringify(payload),
+                    contentType: 'application/json',
+                    success: function(data) {
+                        callback('pull-feedback', data.status, data.statusText)
+                    },
+                    error: function(data) {
+                        callback('pull-feedback', 500, data.statusText)
+                    }
+                };
+
+                // display preloader during commit and push
+                var preloader = '<img class="pull-feedback" src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.5.8/ajax-loader.gif">';
+                container.prepend(preloader);
+
+                // commit and push
+                $.ajax(settings);
+            }
+
+
+            dialog.modal({
+                body: div ,
+                title: 'Pull Notebook',
+                buttons: {'Pull':
                             { class:'btn-primary btn-large',
                               click:on_ok
                             },
@@ -97,10 +284,16 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
         console.info('Loaded Jupyter extension: Git Commit and Push')
 
         // register new action
-        var action_name = IPython.keyboard_manager.actions.register(git_commit_push, 'commit-push', 'jupyter-git')
+        var add = IPython.keyboard_manager.actions.register(git_add, 'add', 'jupyter-git')
+        var commit = IPython.keyboard_manager.actions.register(git_commit, 'commit', 'jupyter-git')
+        var push = IPython.keyboard_manager.actions.register(git_push, 'push', 'jupyter-git')
+        var pull = IPython.keyboard_manager.actions.register(git_pull, 'pull', 'jupyter-git')
 
         // add button for new action
-        IPython.toolbar.add_buttons_group([action_name])
+        IPython.toolbar.add_buttons_group([{'label': 'Add', 'action': add},
+                                           {'label': 'Commit', 'action': commit},
+                                           {'label': 'Push', 'action': push},
+                                           {'label': 'Pull', 'action': pull}]);
 
     }
 

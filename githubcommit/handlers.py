@@ -5,18 +5,10 @@ from git import Repo, GitCommandError
 from subprocess import check_output
 import subprocess
 
-class GitCommitHandler(IPythonHandler):
 
-    def error_and_return(self, dirname, reason):
+class GitBaseHandler(IPythonHandler):
 
-        # send error
-        self.send_error(500, reason=reason)
-
-        # return to directory
-        os.chdir(dirname)
-
-    def put(self):
-
+    def get_git_vars(self):
         # git parameters from environment variables
         # expand variables since Docker's will pass VAR=$VAL as $VAL without expansion
         git_dir = "{}/{}".format(os.path.expandvars(os.environ.get('GIT_PARENT_DIR')), os.path.expandvars(os.environ.get('GIT_REPO_NAME')))
@@ -29,11 +21,78 @@ class GitCommitHandler(IPythonHandler):
         # get the parent directory for git operations
         git_dir_parent = os.path.dirname(git_dir)
 
+        return git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent
+
+    def error_and_return(self, dirname, reason):
+
+        # send error
+        # self.send_error(500, reason=reason)
+        self.write({'status': 500, 'statusText': reason})
+        # return to directory
+        os.chdir(dirname)
+
+
+class GitAddHandler(GitBaseHandler):
+
+    def put(self):
+
+        git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+
+        # obtain filename and msg for add
+        data = json.loads(self.request.body.decode('utf-8'))
+        filename = urllib.parse.unquote(data['filename'])
+        add_only_source = data['add_only_source']
+
+        # get current directory (to return later)
+        cwd = os.getcwd()
+
+        # select branch within repo
+        try:
+            os.chdir(git_dir)
+            dir_repo = check_output(['git','rev-parse','--show-toplevel']).strip()
+            repo = Repo(dir_repo.decode('utf8'))
+        except GitCommandError as e:
+            self.error_and_return(cwd, "Could not checkout repo: {}".format(dir_repo))
+            return
+
+        # create new branch
+        try:
+            print(repo.git.checkout('HEAD', b=git_branch))
+        except GitCommandError:
+            print("Switching to {}".format(repo.heads[git_branch].checkout()))
+
+        # commit current notebook
+        # client will sent pathname containing git directory; append to git directory's parent
+        try:
+            if add_only_source :
+                subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)])
+                filename = filename.replace('ipynb', 'py')
+            
+            print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)))
+
+        except GitCommandError as e:
+            print(e)
+            self.error_and_return(cwd, "Could not add changes to notebook {}: {}".format(git_dir_parent + filename, str(e)))
+            return
+
+        # return to directory
+        os.chdir(cwd)
+
+        # close connection
+        self.write({'status': 200, 'statusText': 'Success!  Add {} to branch {} at {}'.format(filename, git_branch, git_url)})
+
+
+
+class GitCommitHandler(GitBaseHandler):
+
+    def put(self):
+
+        git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+
         # obtain filename and msg for commit
         data = json.loads(self.request.body.decode('utf-8'))
         filename = urllib.parse.unquote(data['filename'])
         msg = data['msg']
-        commit_only_source = data['commit_only_source']
 
 
         # get current directory (to return later)
@@ -57,17 +116,47 @@ class GitCommitHandler(IPythonHandler):
         # commit current notebook
         # client will sent pathname containing git directory; append to git directory's parent
         try:
-            if commit_only_source :
-                subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)])
-                filename = str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename.replace('ipynb', 'py'))
-            
-            print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)))
             print(repo.git.commit( a=False, m="{}\n\nUpdated {}".format(msg, filename) ))
 
         except GitCommandError as e:
             print(e)
-            self.error_and_return(cwd, "Could not commit changes to notebook: {}".format(git_dir_parent + filename))
+            self.error_and_return(cwd, "Could not commit changes to notebook {}: {}".format(git_dir_parent + filename, str(e)))
             return
+
+        # return to directory
+        os.chdir(cwd)
+
+        # close connection
+        self.write({'status': 200, 'statusText': 'Success!  Commit {} on branch {} at {}'.format(filename, git_branch, git_url)})
+
+class GitPushHandler(GitBaseHandler):
+
+    def put(self):
+
+        git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+
+        # obtain force arg for push
+        data = json.loads(self.request.body.decode('utf-8'))
+        force_push = data['force']
+
+        # get current directory (to return later)
+        cwd = os.getcwd()
+
+        # select branch within repo
+        try:
+            os.chdir(git_dir)
+            dir_repo = check_output(['git','rev-parse','--show-toplevel']).strip()
+            repo = Repo(dir_repo.decode('utf8'))
+        except GitCommandError as e:
+            self.error_and_return(cwd, "Could not checkout repo {}: {}".format(dir_repo, str(e)))
+            return
+
+        # create new branch
+        try:
+            print(repo.git.checkout('HEAD', b=git_branch))
+        except GitCommandError:
+            print("Switching to {}".format(repo.heads[git_branch].checkout()))
+
 
         # create or switch to remote
         try:
@@ -78,12 +167,12 @@ class GitCommitHandler(IPythonHandler):
 
         # push changes
         try:
-            pushed = remote.push(git_branch)
+            pushed = remote.push(git_branch, force=force_push==True)
             assert len(pushed)>0
             assert pushed[0].flags in [git.remote.PushInfo.UP_TO_DATE, git.remote.PushInfo.FAST_FORWARD, git.remote.PushInfo.NEW_HEAD, git.remote.PushInfo.NEW_TAG]
         except GitCommandError as e:
             print(e)
-            self.error_and_return(cwd, "Could not push to remote {}".format(git_remote))
+            self.error_and_return(cwd, "Could not push to remote {}: {}".format(git_remote, str(e)))
             return
         except AssertionError as e:
             self.error_and_return(cwd, "Could not push to remote {}: {}".format(git_remote, pushed[0].summary))
@@ -109,10 +198,73 @@ class GitCommitHandler(IPythonHandler):
         os.chdir(cwd)
 
         # close connection
-        self.write({'status': 200, 'statusText': 'Success!  Changes to {} captured on branch {} at {}'.format(filename, git_branch, git_url)})
+        self.write({'status': 200, 'statusText': 'Success!  Pushed to branch {} at {}'.format(git_branch, git_url)})
+
+class GitPullHandler(GitBaseHandler):
+
+    def post(self):
+
+        git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+
+        # obtain force arg for pull
+        data = json.loads(self.request.body.decode('utf-8'))
+        # force_pull = data['force']
+
+        # get current directory (to return later)
+        cwd = os.getcwd()
+
+        # select branch within repo
+        try:
+            os.chdir(git_dir)
+            dir_repo = check_output(['git','rev-parse','--show-toplevel']).strip()
+            repo = Repo(dir_repo.decode('utf8'))
+        except GitCommandError as e:
+            self.error_and_return(cwd, "Could not checkout repo {}: {}".format(dir_repo, str(e)))
+            return
+
+        # create new branch
+        try:
+            print(repo.git.checkout('HEAD', b=git_branch))
+        except GitCommandError:
+            print("Switching to {}".format(repo.heads[git_branch].checkout()))
+
+
+        # create or switch to remote
+        try:
+            remote = repo.create_remote(git_remote, git_url)
+        except GitCommandError:
+            print("Remote {} already exists...".format(git_remote))
+            remote = repo.remote(git_remote)
+
+        # pull changes
+        try:
+            pulled = remote.pull(git_branch)
+            assert len(pulled)>0
+        except GitCommandError as e:
+            print(e)
+            self.error_and_return(cwd, "Could not pull from remote {}: {}".format(git_remote, str(e)))
+            return
+        except AssertionError as e:
+            self.error_and_return(cwd, "Could not pull from remote {}: {}".format(git_remote, pulled[0].summary))
+            return
+
+        # return to directory
+        os.chdir(cwd)
+
+        # close connection
+        self.write({'status': 200, 'statusText': 'Success!  Pull from {} at {}'.format(git_branch, git_url)})
 
 
 def setup_handlers(nbapp):
+    route_pattern = ujoin(nbapp.settings['base_url'], '/git/add')
+    nbapp.add_handlers('.*', [(route_pattern, GitAddHandler)])
+
     route_pattern = ujoin(nbapp.settings['base_url'], '/git/commit')
     nbapp.add_handlers('.*', [(route_pattern, GitCommitHandler)])
+
+    route_pattern = ujoin(nbapp.settings['base_url'], '/git/push')
+    nbapp.add_handlers('.*', [(route_pattern, GitPushHandler)])
+
+    route_pattern = ujoin(nbapp.settings['base_url'], '/git/pull')
+    nbapp.add_handlers('.*', [(route_pattern, GitPullHandler)])
 
