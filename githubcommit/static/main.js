@@ -96,7 +96,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var on_success = undefined;
             var on_error = undefined;
 
-            var p = $('<p/>').text("Please enter your commit message. Only this notebook will be committed.")
+            var p = $('<p/>').text("Please enter your commit message.")
             var input = $('<textarea rows="4" cols="72"></textarea>')
             var div = $('<div/>')
 
