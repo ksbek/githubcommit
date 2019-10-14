@@ -12,7 +12,7 @@ run need help to modify this extension allowing user to select his repo and bran
 You can currently install this directly from git:
 
 ```
-pip install git+https://github.com/sat28/githubcommit.git
+pip install git+https://github.com/ksbek/githubcommit.git
 jupyter serverextension enable --py githubcommit
 jupyter nbextension install --py githubcommit
 ```
@@ -46,7 +46,13 @@ export GIT_USER_UPSTREAM=sat28 <br />
 
 ![Extension](screens/extension.png?raw=true "Extension added to toolbar")
 
+![Add Message](screens/add.png?raw=true "Add Message")
+
 ![Commit Message](screens/commit.png?raw=true "Commit Message")
+
+![Push Message](screens/push.png?raw=true "Push Message")
+
+![Pull Message](screens/pull.png?raw=true "Pull Message")
 
 ![Success Message](screens/success.png?raw=true "Success Message")
 
