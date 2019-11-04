@@ -34,13 +34,16 @@ jupyter nbextension enable --py githubcommit
 * Run jupyter notebook from within your repo directory
 
 ## Example git configuration
-export GIT_PARENT_DIR=~ <br />
-export GIT_REPO_NAME=gitjupyter <br />
-export GIT_BRANCH_NAME=master <br />
-export GIT_USER=sat28 <br />
-export GIT_EMAIL=anand.shaleen@gmail.com <br />
-export GITHUB_ACCESS_TOKEN=#access-token from github developer settings <br />
-export GIT_USER_UPSTREAM=sat28 <br />
+export GIT_PARENT_DIR=~
+export GIT_REPO_NAME=#your-repo
+export GIT_BRANCH_NAME=#your-branch
+export GIT_USER=#your-gituser
+export GIT_EMAIL=#your-email
+export GITHUB_ACCESS_TOKEN=#access-token from github developer settings
+
+
+#### This is for pull request to original repo if the current repo is forked.
+export GIT_USER_UPSTREAM=#original-repo-user <br />
 
 ## Screenshots
 

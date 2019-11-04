@@ -4,16 +4,15 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
         var container = $('#notebook-container');
         if (status == 500) {
             // display feedback to user
-            feedback = '<div class="'+feedback_container+' alert alert-danger alert-dismissible" role="alert"> \
+            feedback = '<div class="feedback '+feedback_container+' alert alert-danger alert-dismissible" role="alert"> \
                               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
-                              <strong>Warning!</strong> Something went wrong. \
                               <div>'+statusText+'</div> \
                             </div>';
 
         } else {
 
             // display feedback to user
-            feedback = '<div class="'+feedback_container+' alert alert-success alert-dismissible" role="alert"> \
+            feedback = '<div class="feedback '+feedback_container+' alert alert-success alert-dismissible" role="alert"> \
                               <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> \
                               '+statusText+' \
                                \
@@ -21,6 +20,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
         }
 
         // display feedback
+        $('.feedback').remove();
         $('.' + feedback_container).remove();
         container.prepend(feedback);
     }
@@ -34,10 +34,9 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var on_error = undefined;
 
             var div = $('<div/>')
+            var p = $('<p/>').text("Add changes of this notebook to staging area.")
 
-            var checkbox = '<input type="checkbox" id="add_only_source" name="feature" value="scales" checked /><label>Add only source code</label>'
-
-            div.append(checkbox)
+            div.append(p)
 
             // get the canvas for user feedback
             var container = $('#notebook-container');
@@ -46,8 +45,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                 var re = /^\/notebooks(.*?)$/;
                 var filepath = window.location.pathname.match(re)[1];
                 var payload = {
-                             'filename': filepath,
-                             'add_only_source': $("#add_only_source").prop('checked')
+                             'filename': filepath
                            };
                 var settings = {
                     url : '/git/add',

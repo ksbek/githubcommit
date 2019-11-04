@@ -6,6 +6,15 @@ from subprocess import check_output
 import subprocess
 
 
+def get_status(repo, path):
+    changed = [ item.a_path for item in repo.index.diff(None) ]
+    if path in repo.untracked_files:
+        return 'untracked'
+    elif path in changed:
+        return 'modified'
+    else:
+        return 'don''t care'
+
 class GitBaseHandler(IPythonHandler):
 
     def get_git_vars(self):
@@ -41,14 +50,13 @@ class GitAddHandler(GitBaseHandler):
         # obtain filename and msg for add
         data = json.loads(self.request.body.decode('utf-8'))
         filename = urllib.parse.unquote(data['filename'])
-        add_only_source = data['add_only_source']
 
         # get current directory (to return later)
         cwd = os.getcwd()
 
         # select branch within repo
         try:
-            os.chdir(git_dir)
+            os.chdieplace('ipynb', 'py')(git_dir)
             dir_repo = check_output(['git','rev-parse','--show-toplevel']).strip()
             repo = Repo(dir_repo.decode('utf8'))
         except GitCommandError as e:
@@ -61,14 +69,18 @@ class GitAddHandler(GitBaseHandler):
         except GitCommandError:
             print("Switching to {}".format(repo.heads[git_branch].checkout()))
 
+        if get_status(repo, filename[1:]) != 'modified':
+            self.error_and_return(cwd, "There's no changes on this notbook. Did you save it after you made change?")
+            return
+
         # commit current notebook
         # client will sent pathname containing git directory; append to git directory's parent
         try:
-            if add_only_source :
-                subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)])
-                filename = filename.replace('ipynb', 'py')
-            
+            subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)])
+            src_filename = filename.replace('ipynb', 'py')
+
             print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)))
+            print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + src_filename)))
 
         except GitCommandError as e:
             print(e)
@@ -112,6 +124,10 @@ class GitCommitHandler(GitBaseHandler):
             print(repo.git.checkout('HEAD', b=git_branch))
         except GitCommandError:
             print("Switching to {}".format(repo.heads[git_branch].checkout()))
+
+        if not repo.index.diff("HEAD"):
+            self.error_and_return(cwd, "There are no staged files to commit.")
+            return
 
         # commit current notebook
         # client will sent pathname containing git directory; append to git directory's parent
@@ -190,8 +206,10 @@ class GitPushHandler(GitBaseHandler):
           github_headers = {"Authorization": "token {}".format(git_access_token)}
           r = requests.post(github_url, data=json.dumps(github_pr), headers=github_headers)
           if r.status_code != 201:
+            print(r)
             print("Error submitting Pull Request to {}".format(git_repo_upstream))
-        except:
+        except Exception as e:
+            print(e)
             print("Error submitting Pull Request to {}".format(git_repo_upstream))
 
         # return to directory
@@ -240,7 +258,7 @@ class GitPullHandler(GitBaseHandler):
         try:
             pulled = remote.pull(git_branch)
             assert len(pulled)>0
-        except GitCommandError as e:
+        except Exception as e:
             print(e)
             self.error_and_return(cwd, "Could not pull from remote {}: {}".format(git_remote, str(e)))
             return
