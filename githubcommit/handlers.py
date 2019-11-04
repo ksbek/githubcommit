@@ -13,7 +13,7 @@ def get_status(repo, path):
     elif path in changed:
         return 'modified'
     else:
-        return 'don''t care'
+        return 'nothing'
 
 class GitBaseHandler(IPythonHandler):
 
@@ -56,7 +56,7 @@ class GitAddHandler(GitBaseHandler):
 
         # select branch within repo
         try:
-            os.chdieplace('ipynb', 'py')(git_dir)
+            os.chdir(git_dir)
             dir_repo = check_output(['git','rev-parse','--show-toplevel']).strip()
             repo = Repo(dir_repo.decode('utf8'))
         except GitCommandError as e:
@@ -69,7 +69,7 @@ class GitAddHandler(GitBaseHandler):
         except GitCommandError:
             print("Switching to {}".format(repo.heads[git_branch].checkout()))
 
-        if get_status(repo, filename[1:]) != 'modified':
+        if get_status(repo, filename[1:]) == 'nothing':
             self.error_and_return(cwd, "There's no changes on this notbook. Did you save it after you made change?")
             return
 
