@@ -13,7 +13,12 @@ You can currently install this directly from git:
 
 ```
 pip install git+https://github.com/ksbek/githubcommit.git
+
 jupyter serverextension enable --py githubcommit
+
+jupyter nbextension uninstall --py githubcommit
+(This command is needed when update)
+
 jupyter nbextension install --py githubcommit
 ```
 
