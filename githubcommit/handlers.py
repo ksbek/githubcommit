@@ -96,7 +96,7 @@ class GitAddHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Add {} to branch {} at {}'.format(filename, git_branch, git_url)})
 
         except Exception as e:
-            f = open("/tmp/githubcommit_logs.txt", "a")
+            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
             f.write("\nGIT ADD ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -153,7 +153,7 @@ class GitCommitHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Commit {} on branch {} at {}'.format(filename, git_branch, git_url)})
 
         except Exception as e:
-            f = open("/tmp/githubcommit_logs.txt", "a")
+            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
             f.write("\nGIT COMMIT ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -233,7 +233,7 @@ class GitPushHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Pushed to branch {} at {}'.format(git_branch, git_url)})
 
         except Exception as e:
-            f = open("/tmp/githubcommit_logs.txt", "a")
+            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
             f.write("\nGIT PUSH ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -293,7 +293,7 @@ class GitPullHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Pull from {} at {}'.format(git_branch, git_url)})
 
         except Exception as e:
-            f = open("/tmp/githubcommit_logs.txt", "a")
+            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
             f.write("\nGIT PULL ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
