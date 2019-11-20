@@ -42,7 +42,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var container = $('#notebook-container');
 
             function on_ok(){
-                var re = /^\/notebooks(.*?)$/;
+                var re = /\/notebooks(.*?)$/;
                 var filepath = window.location.pathname.match(re)[1];
                 var payload = {
                              'filename': filepath
@@ -106,7 +106,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var container = $('#notebook-container');
 
             function on_ok(){
-                var re = /^\/notebooks(.*?)$/;
+                var re = /\/notebooks(.*?)$/;
                 var filepath = window.location.pathname.match(re)[1];
                 var payload = {
                              'filename': filepath,
@@ -170,7 +170,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var container = $('#notebook-container');
 
             function on_ok(){
-                var re = /^\/notebooks(.*?)$/;
+                var re = /\/notebooks(.*?)$/;
                 var payload = {
                              'force': $("#force_push").prop('checked')
                            };
@@ -232,7 +232,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
             var container = $('#notebook-container');
 
             function on_ok(){
-                var re = /^\/notebooks(.*?)$/;
+                var re = /\/notebooks(.*?)$/;
                 var payload = {
                              // 'force': $("#force_pull").prop('checked')
                            };
