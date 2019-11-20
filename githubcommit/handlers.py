@@ -82,8 +82,8 @@ class GitAddHandler(GitBaseHandler):
             subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename)])
             src_filename = filename.replace('ipynb', 'py')
 
-            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename)))
-            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + src_filename)))
+            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename))
+            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + src_filename))
 
         except GitCommandError as e:
             print(e)
