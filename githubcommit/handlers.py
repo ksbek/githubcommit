@@ -4,7 +4,10 @@ import os, json, git, urllib, requests
 from git import Repo, GitCommandError
 from subprocess import check_output
 import subprocess
+import sys
 
+sys.path.insert(1, '~/githubcommit/settings')
+from settings import config
 
 def get_status(repo, path):
     changed = [ item.a_path for item in repo.index.diff(None) ]
@@ -18,16 +21,14 @@ def get_status(repo, path):
 class GitBaseHandler(IPythonHandler):
 
     def get_git_vars(self):
-        check_output(['/bin/bash', '-c', 'source ~/githubcommit/config.sh'])
-
         # git parameters from environment variables
         # expand variables since Docker's will pass VAR=$VAL as $VAL without expansion
-        git_dir = "{}/{}".format(os.path.expandvars(os.environ.get('GIT_PARENT_DIR')), os.path.expandvars(os.environ.get('GIT_REPO_NAME')))
-        git_url = os.path.expandvars(os.environ.get('GIT_REMOTE_URL'))
-        git_user = os.path.expandvars(os.environ.get('GIT_USER'))
-        git_repo_upstream = os.path.expandvars(os.environ.get('GIT_REMOTE_UPSTREAM'))
-        git_branch = git_remote = os.path.expandvars(os.environ.get('GIT_BRANCH_NAME'))
-        git_access_token = os.path.expandvars(os.environ.get('GITHUB_ACCESS_TOKEN'))
+        git_dir = "{}/{}".format(config.GIT_PARENT_DIR, config.GIT_REPO_NAME)
+        git_url = config.GIT_REMOTE_URL
+        git_user = config.GIT_USER
+        git_repo_upstream = config.GIT_REMOTE_UPSTREAM
+        git_branch = git_remote = config.GIT_BRANCH_NAME
+        git_access_token = config.GITHUB_ACCESS_TOKEN
 
         # get the parent directory for git operations
         git_dir_parent = os.path.dirname(git_dir)
@@ -78,11 +79,11 @@ class GitAddHandler(GitBaseHandler):
         # commit current notebook
         # client will sent pathname containing git directory; append to git directory's parent
         try:
-            subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)])
+            subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename)])
             src_filename = filename.replace('ipynb', 'py')
 
-            print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + filename)))
-            print(repo.git.add(str(os.environ.get('GIT_PARENT_DIR') + "/" + os.environ.get('GIT_REPO_NAME') + src_filename)))
+            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename)))
+            print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + src_filename)))
 
         except GitCommandError as e:
             print(e)
