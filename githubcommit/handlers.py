@@ -18,6 +18,8 @@ def get_status(repo, path):
 class GitBaseHandler(IPythonHandler):
 
     def get_git_vars(self):
+        check_output(['/bin/bash', '-c', 'source ~/githubcommit/config.sh'])
+
         # git parameters from environment variables
         # expand variables since Docker's will pass VAR=$VAL as $VAL without expansion
         git_dir = "{}/{}".format(os.path.expandvars(os.environ.get('GIT_PARENT_DIR')), os.path.expandvars(os.environ.get('GIT_REPO_NAME')))
