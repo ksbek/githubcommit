@@ -24,6 +24,9 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
         $('.' + feedback_container).remove();
         container.prepend(feedback);
     }
+
+    var reg = /(.*?)\/notebooks/;
+    var base_url = window.location.pathname.match(reg)[1];
     // we will define an action here that should happen when we ask to clear and restart the kernel.
     var git_add  = {
         help: 'Add current notebook',
@@ -48,7 +51,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                              'filename': filepath
                            };
                 var settings = {
-                    url : '/git/add',
+                    url : base_url + '/git/add',
                     processData : false,
                     type : "PUT",
                     dataType: "json",
@@ -113,7 +116,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                              'msg': input.val()
                            };
                 var settings = {
-                    url : '/git/commit',
+                    url : base_url + '/git/commit',
                     processData : false,
                     type : "PUT",
                     dataType: "json",
@@ -175,7 +178,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                              'force': $("#force_push").prop('checked')
                            };
                 var settings = {
-                    url : '/git/push',
+                    url : base_url + '/git/push',
                     processData : false,
                     type : "PUT",
                     dataType: "json",
@@ -237,7 +240,7 @@ define(['base/js/namespace','base/js/dialog','jquery'],function(IPython, dialog,
                              // 'force': $("#force_pull").prop('checked')
                            };
                 var settings = {
-                    url : '/git/pull',
+                    url : base_url + '/git/pull',
                     processData : false,
                     type : "POST",
                     dataType: "json",
