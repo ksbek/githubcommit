@@ -51,7 +51,7 @@ class GitAddHandler(GitBaseHandler):
 
             # obtain filename and msg for add
             data = json.loads(self.request.body.decode('utf-8'))
-            filename = urllib.parse.unquote(data['filename']).replace('/' + GIT_REPO_NAME, '')
+            filename = urllib.parse.unquote(data['filename']).replace('/' + config.GIT_REPO_NAME, '')
 
             # get current directory (to return later)
             cwd = os.getcwd()
@@ -110,7 +110,7 @@ class GitCommitHandler(GitBaseHandler):
 
             # obtain filename and msg for commit
             data = json.loads(self.request.body.decode('utf-8'))
-            filename = urllib.parse.unquote(data['filename']).replace('/' + GIT_REPO_NAME, '')
+            filename = urllib.parse.unquote(data['filename']).replace('/' + config.GIT_REPO_NAME, '')
             msg = data['msg']
 
 

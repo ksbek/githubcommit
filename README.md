@@ -22,21 +22,25 @@ You can currently install this directly from git:
 
 5. source env.sh
 
-6. cd {REPO INSTALLATION FOLDER}/githubcommit
+6. Configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account
 
-7. Please open config.py file and set git env variables
+7. cd {REPO INSTALLATION FOLDER}/githubcommit
 
-8. cd {REPO INSTALLATION FOLDER}
+8. Please open config.py file and set git env variables
 
-9. pip install .
+9. cd {REPO INSTALLATION FOLDER}
 
-10. jupyter serverextension enable --py githubcommit
+10. pip install .
 
-11. jupyter nbextension uninstall --py githubcommit
+11. jupyter serverextension enable --py githubcommit
 
-12. jupyter nbextension install --py githubcommit
+12. jupyter nbextension uninstall --py githubcommit
 
-13. jupyter nbextension enable --py githubcommit
+13. jupyter nbextension install --py githubcommit
+
+14. jupyter nbextension enable --py githubcommit
+
+15. Restart jupyter server
 ```
 
 
