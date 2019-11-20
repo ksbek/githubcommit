@@ -12,43 +12,29 @@ run need help to modify this extension allowing user to select his repo and bran
 You can currently install this directly from git:
 
 ```
-pip install git+https://github.com/ksbek/githubcommit.git
+1. pip uninsstall githubcommit
 
-jupyter serverextension enable --py githubcommit
+2. git clone https://github.com/ksbek/githubcommit.git
 
-jupyter nbextension uninstall --py githubcommit
-(This command is needed when update)
+3. cd githubcommit
 
-jupyter nbextension install --py githubcommit
+4. Please open config.sh file and set env variables
+
+5. source env.sh
+
+6. cd githubcommit
+
+7. Please open config.py file and set git env variables
+
+8. jupyter serverextension enable --py githubcommit
+
+9. jupyter nbextension uninstall --py githubcommit
+
+10. jupyter nbextension install --py githubcommit
+
+11. jupyter nbextension enable --py githubcommit
 ```
 
-To enable this extension for all notebooks:
-
-```
-jupyter nbextension enable --py githubcommit
-```
-
-## Steps
-
-* Install package using above commands
-* Create Git repo where notebooks will be pushed if not already exists and clone it in your `GIT_PARENT_DIR`
-* Clone this repo as well in your `GIT_PARENT_DIR` directory
-* Replace the values in env.sh present in this repo itself
-* Run the command - source ~/githubcommit/env.sh
-* Configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account
-* Run jupyter notebook from within your repo directory
-
-## Example git configuration
-export GIT_PARENT_DIR=~ <br />
-export GIT_REPO_NAME=#your-repo <br />
-export GIT_BRANCH_NAME=#your-branch <br />
-export GIT_USER=#your-gituser <br />
-export GIT_EMAIL=#your-email <br />
-export GITHUB_ACCESS_TOKEN=#access-token from github developer settings <br />
-
-
-#### This is for pull request to original repo if the current repo is forked.
-export GIT_USER_UPSTREAM=#original-repo-user <br />
 
 ## Screenshots
 
