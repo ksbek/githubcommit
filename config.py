@@ -1,10 +1,10 @@
 from git import Repo
-import json
+import json, os
 
 # Read config vars
 with open('config.json') as json_file:
   data = json.load(json_file)
-  git_dir = "{}/{}".format(data['git_parent_dir'], data['git_repo_name'])
+  git_dir = "{}/{}".format(data['git_parent_dir'], data['git_repo_name']).replace('~', os.getcwd())
   git_url = "git@github.com:{}/{}.git".format(data['git_user'], data['git_repo_name'])
 
   # Clone git repo

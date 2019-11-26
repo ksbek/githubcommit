@@ -21,7 +21,7 @@ class GitBaseHandler(IPythonHandler):
 
         # Read git config variables from ~/config.json
         cwd = os.getcwd()
-        json_file = open(cwd + '/config.json'):
+        json_file = open(cwd + '/config.json')
         data = json.load(json_file)
 
         git_parent_dir = data['git_parent_dir'].replace('~', cwd)

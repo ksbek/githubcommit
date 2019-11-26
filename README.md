@@ -18,21 +18,9 @@ You can currently install this directly from git:
 
 3. Please open config.json and set git configuration values
 
-4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/config.py | python
+4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/bootstrap.py | bash
 
-5. pip uninstall githubcommit
-
-6. pip install git+https://github.com/ksbek/githubcommit.git
-
-7. jupyter serverextension enable --py githubcommit
-
-8. jupyter nbextension uninstall --py githubcommit
-
-9. jupyter nbextension install --py githubcommit
-
-10. jupyter nbextension enable --py githubcommit
-
-11. Restart jupyter server
+5. Restart jupyter server
 ```
 
 
