@@ -1,0 +1,8 @@
+{
+  "git_parent_dir": "~",
+  "git_repo_name": "#your-repo",
+  "git_branch": "#your-branch",
+  "git_remote": "#remote-name",
+  "git_user": "#your-gituser",
+  "git_email": "#your-email"
+}

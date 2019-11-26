@@ -12,35 +12,27 @@ run need help to modify this extension allowing user to select his repo and bran
 You can currently install this directly from git:
 
 ```
-1. pip uninstall githubcommit
+1. Please configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account first.
 
-2. git clone https://github.com/ksbek/githubcommit.git
+2. cd && curl -O https://raw.githubusercontent.com/ksbek/githubcommit/master/config.json
 
-3. cd githubcommit
+3. Please open config.json and set git configuration values
 
-4. Please open config.sh file and set env variables
+4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/config.py | python
 
-5. source env.sh
+5. pip uninstall githubcommit
 
-6. Configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account
+6. pip install git+https://github.com/ksbek/githubcommit.git
 
-7. cd {REPO INSTALLATION FOLDER}/githubcommit
+7. jupyter serverextension enable --py githubcommit
 
-8. Please open config.py file and set git env variables
+8. jupyter nbextension uninstall --py githubcommit
 
-9. cd {REPO INSTALLATION FOLDER}
+9. jupyter nbextension install --py githubcommit
 
-10. pip install .
+10. jupyter nbextension enable --py githubcommit
 
-11. jupyter serverextension enable --py githubcommit
-
-12. jupyter nbextension uninstall --py githubcommit
-
-13. jupyter nbextension install --py githubcommit
-
-14. jupyter nbextension enable --py githubcommit
-
-15. Restart jupyter server
+11. Restart jupyter server
 ```
 
 

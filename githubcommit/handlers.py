@@ -6,8 +6,6 @@ from subprocess import check_output
 import subprocess
 import sys
 
-from . import config
-
 def get_status(repo, path):
     changed = [ item.a_path for item in repo.index.diff(None) ]
     if path in repo.untracked_files:
@@ -20,19 +18,21 @@ def get_status(repo, path):
 class GitBaseHandler(IPythonHandler):
 
     def get_git_vars(self):
-        # git parameters from environment variables
-        # expand variables since Docker's will pass VAR=$VAL as $VAL without expansion
-        git_dir = "{}/{}".format(config.GIT_PARENT_DIR, config.GIT_REPO_NAME)
-        git_url = config.GIT_REMOTE_URL
-        git_user = config.GIT_USER
-        git_repo_upstream = config.GIT_REMOTE_UPSTREAM
-        git_branch = git_remote = config.GIT_BRANCH_NAME
-        git_access_token = config.GITHUB_ACCESS_TOKEN
 
-        # get the parent directory for git operations
-        git_dir_parent = os.path.dirname(git_dir)
+        # Read git config variables from ~/config.json
+        cwd = os.getcwd()
+        json_file = open(cwd + '/config.json'):
+        data = json.load(json_file)
 
-        return git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent
+        git_parent_dir = data['git_parent_dir'].replace('~', cwd)
+        git_dir = "{}/{}".format(git_parent_dir, data['git_repo_name'])
+        git_repo_name = data['git_repo_name']
+        git_url = "git@github.com:{}/{}.git".format(data['git_user'], data['git_repo_name'])
+        git_user = data['git_user']
+        git_branch = data['git_branch']
+        git_remote = data['git_remote']
+
+        return git_dir, git_repo_name, git_url, git_user, git_branch, git_remote
 
     def error_and_return(self, dirname, reason):
 
@@ -47,11 +47,11 @@ class GitAddHandler(GitBaseHandler):
 
     def put(self):
         try:
-            git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+            git_dir, git_repo_name, git_url, git_user, git_branch, git_remote = self.get_git_vars()
 
             # obtain filename and msg for add
             data = json.loads(self.request.body.decode('utf-8'))
-            filename = urllib.parse.unquote(data['filename']).replace('/' + config.GIT_REPO_NAME, '')
+            filename = urllib.parse.unquote(data['filename']).replace('/' + git_repo_name, '')
 
             # get current directory (to return later)
             cwd = os.getcwd()
@@ -78,15 +78,15 @@ class GitAddHandler(GitBaseHandler):
             # commit current notebook
             # client will sent pathname containing git directory; append to git directory's parent
             try:
-                subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename)])
+                subprocess.run(['jupyter', 'nbconvert', '--to', 'script', str(git_dir + filename)])
                 src_filename = filename.replace('ipynb', 'py')
 
-                print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + filename))
-                print(repo.git.add(config.GIT_PARENT_DIR + "/" + config.GIT_REPO_NAME + src_filename))
+                print(repo.git.add(git_dir + filename))
+                print(repo.git.add(git_dir + src_filename))
 
             except GitCommandError as e:
                 print(e)
-                self.error_and_return(cwd, "Could not add changes to notebook {}: {}".format(git_dir_parent + filename, str(e)))
+                self.error_and_return(cwd, "Could not add changes to notebook {}: {}".format(filename, str(e)))
                 return
 
             # return to directory
@@ -96,7 +96,7 @@ class GitAddHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Add {} to branch {} at {}'.format(filename, git_branch, git_url)})
 
         except Exception as e:
-            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
+            f = open("{}/logs.txt".format(os.getcwd()), "a")
             f.write("\nGIT ADD ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -106,11 +106,11 @@ class GitCommitHandler(GitBaseHandler):
 
     def put(self):
         try:
-            git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+            git_dir, git_repo_name, git_url, git_user, git_branch, git_remote = self.get_git_vars()
 
             # obtain filename and msg for commit
             data = json.loads(self.request.body.decode('utf-8'))
-            filename = urllib.parse.unquote(data['filename']).replace('/' + config.GIT_REPO_NAME, '')
+            filename = urllib.parse.unquote(data['filename']).replace('/' + git_repo_name, '')
             msg = data['msg']
 
 
@@ -143,7 +143,7 @@ class GitCommitHandler(GitBaseHandler):
 
             except GitCommandError as e:
                 print(e)
-                self.error_and_return(cwd, "Could not commit changes to notebook {}: {}".format(git_dir_parent + filename, str(e)))
+                self.error_and_return(cwd, "Could not commit changes to notebook {}: {}".format(filename, str(e)))
                 return
 
             # return to directory
@@ -153,7 +153,7 @@ class GitCommitHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Commit {} on branch {} at {}'.format(filename, git_branch, git_url)})
 
         except Exception as e:
-            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
+            f = open("{}/logs.txt".format(os.getcwd()), "a")
             f.write("\nGIT COMMIT ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -163,7 +163,7 @@ class GitPushHandler(GitBaseHandler):
 
     def put(self):
         try:
-            git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+            git_dir, git_repo_name, git_url, git_user, git_branch, git_remote = self.get_git_vars()
 
             # obtain force arg for push
             data = json.loads(self.request.body.decode('utf-8'))
@@ -208,24 +208,6 @@ class GitPushHandler(GitBaseHandler):
                 self.error_and_return(cwd, "Could not push to remote {}: {}".format(git_remote, pushed[0].summary))
                 return
 
-            # open pull request
-            try:
-              github_url = "https://api.github.com/repos/{}/pulls".format(git_repo_upstream)
-              github_pr = {
-                  "title":"{} Notebooks".format(git_user),
-                  "body":"IPython notebooks submitted by {}".format(git_user),
-                  "head":"{}:{}".format(git_user, git_remote),
-                  "base":"master"
-              }
-              github_headers = {"Authorization": "token {}".format(git_access_token)}
-              r = requests.post(github_url, data=json.dumps(github_pr), headers=github_headers)
-              if r.status_code != 201:
-                print(r)
-                print("Error submitting Pull Request to {}".format(git_repo_upstream))
-            except Exception as e:
-                print(e)
-                print("Error submitting Pull Request to {}".format(git_repo_upstream))
-
             # return to directory
             os.chdir(cwd)
 
@@ -233,7 +215,7 @@ class GitPushHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Pushed to branch {} at {}'.format(git_branch, git_url)})
 
         except Exception as e:
-            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
+            f = open("{}/logs.txt".format(os.getcwd()), "a")
             f.write("\nGIT PUSH ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
@@ -242,7 +224,7 @@ class GitPullHandler(GitBaseHandler):
 
     def post(self):
         try:
-            git_dir, git_url, git_user, git_repo_upstream, git_branch, git_remote, git_access_token, git_dir_parent = self.get_git_vars()
+            git_dir, git_repo_name, git_url, git_user, git_branch, git_remote = self.get_git_vars()
 
             # obtain force arg for pull
             data = json.loads(self.request.body.decode('utf-8'))
@@ -293,7 +275,7 @@ class GitPullHandler(GitBaseHandler):
             self.write({'status': 200, 'statusText': 'Success!  Pull from {} at {}'.format(git_branch, git_url)})
 
         except Exception as e:
-            f = open("{}/logs.txt".format(config.GIT_PARENT_DIR), "a")
+            f = open("{}/logs.txt".format(os.getcwd()), "a")
             f.write("\nGIT PULL ERROR: \n")
             f.write(str(e) + "\n")
             f.close()
