@@ -5,7 +5,7 @@ pip install gitpython --user
 curl https://raw.githubusercontent.com/ksbek/githubcommit/master/config.py | python
 
 # 3. uninstall package before install(this step is needed for updating)
-pip uninstall githubcommit
+pip uninstall githubcommit -y
 
 # 4. install package from git
 pip install git+https://github.com/ksbek/githubcommit.git --user

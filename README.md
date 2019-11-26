@@ -18,7 +18,7 @@ You can currently install this directly from git:
 
 3. Please open config.json and set git configuration values
 
-4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/bootstrap.py | bash
+4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/bootstrap.sh | bash
 
 5. Restart jupyter server
 ```
