@@ -1,10 +1,11 @@
+
 # githubcommit
 
 githubcommit is a jupyter notebook extension enabling users push ipython notebooks to a git repo.
 The git button gets displayed in the notebook toolbar. After saving any notebook
 the user can push notebook to pre-specified git repository. There are few
-environment variables that must be exported. Currently this extension supports
-commits to a single github repo defined in environment variable but in the long
+configuration variables that must be set. Currently this extension supports
+commits to a single github repo defined in configuration variable but in the long
 run need help to modify this extension allowing user to select his repo and branch.
 
 ## Installation
@@ -12,13 +13,19 @@ run need help to modify this extension allowing user to select his repo and bran
 You can currently install this directly from git:
 
 ```
-1. Please configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account first.
+1. Please generate ssh key using following command and configure ssh key (present in ~/.ssh/id_rsa.pub or specified location) in github account.
 
-2. cd && curl -O https://raw.githubusercontent.com/ksbek/githubcommit/master/config.json
+   ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
+
+2. Download config.json template
+
+   cd && curl -O https://raw.githubusercontent.com/ksbek/githubcommit/master/config.json
 
 3. Please open config.json and set git configuration values
 
-4. curl https://raw.githubusercontent.com/ksbek/githubcommit/master/bootstrap.sh | bash
+4. Setup githubcommit package
+
+   curl https://raw.githubusercontent.com/ksbek/githubcommit/master/bootstrap.sh | bash
 
 5. Restart jupyter server
 ```
@@ -37,10 +44,3 @@ You can currently install this directly from git:
 ![Pull Message](screens/pull.png?raw=true "Pull Message")
 
 ![Success Message](screens/success.png?raw=true "Success Message")
-
-## Credits
-
-Thanks to https://github.com/Lab41/sunny-side-up for laying the foundation of this extension.
-
-Thanks to https://github.com/justvarshney for support.
-
